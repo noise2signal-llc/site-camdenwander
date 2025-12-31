@@ -43,8 +43,14 @@
 			<p>&copy; 2026 Camden Wander Lindahl</p>
 		</div>
 		<script src="//cdn.jsdelivr.net/npm/hls.js"></script>
-		<script src="//cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-		<script src="js/webgl-background.js"></script>
+		<script type="importmap">
+		{
+			"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+			}
+		}
+		</script>
+		<script type="module" src="js/webgl-background.js"></script>
 		<script src="js/camden-wander.js"></script>
 	<body>
 </html>

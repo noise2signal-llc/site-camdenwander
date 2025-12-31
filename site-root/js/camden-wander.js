@@ -7,6 +7,44 @@ var timelinePlayed = document.getElementById('timeline-played');
 var PLAY_ICON = '\u25B6';   // ▶
 var PAUSE_ICON = '\u23F8';  // ⏸
 
+// Web Audio API for bass frequency analysis
+var audioContext = null;
+var analyser = null;
+var dataArray = null;
+var audioSource = null;
+
+function initAudioAnalysis() {
+  if (audioContext) return;
+
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+
+  audioSource = audioContext.createMediaElementSource(audio);
+  audioSource.connect(analyser);
+  analyser.connect(audioContext.destination);
+
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+}
+
+// Export audio state for WebGL animation
+window.camdenAudio = {
+  isPlaying: function() {
+    return audio && !audio.paused;
+  },
+  getBassIntensity: function() {
+    if (!analyser || audio.paused) return 0;
+
+    analyser.getByteFrequencyData(dataArray);
+    // Average of bass frequency bins 4-6
+    var sum = 0;
+    for (var i = 4; i <= 6; i++) {
+      sum += dataArray[i];
+    }
+    return (sum / 3) / 255;  // Normalize to 0-1
+  }
+};
+
 // Track folders - add new tracks here (kebab-case folder names)
 var producedTracks = [
   'creeping-insolence',
@@ -83,6 +121,7 @@ function handleTrackClick() {
 }
 
 playPauseBtn.addEventListener('click', function() {
+  if (this.disabled) return;
   if (audio.paused) {
     audio.play();
   } else {
@@ -91,6 +130,7 @@ playPauseBtn.addEventListener('click', function() {
 });
 
 audio.addEventListener('play', function() {
+  initAudioAnalysis();
   playPauseBtn.textContent = PAUSE_ICON;
   playPauseBtn.classList.add('playing');
 });

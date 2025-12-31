@@ -1,14 +1,31 @@
 #!/bin/sh
 
-for input_file in /workspace/transcode/staged/*; do
-    [ -f "$input_file" ] || continue
+# HLS Transcoder for Camden Wander site
+#
+# Place source files in the appropriate staged subdirectory:
+#   /workspace/transcode/staged/production/
+#   /workspace/transcode/staged/live-performances/
+#   /workspace/transcode/staged/mixes/
+
+STAGED_ROOT="/workspace/transcode/staged"
+OUTPUT_ROOT="/workspace/site-root/hls"
+
+normalize_name() {
+    echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//'
+}
+
+transcode_file() {
+    input_file="$1"
+    output_category="$2"
+
+    [ -f "$input_file" ] || return 1
 
     filename=$(basename "$input_file")
     name="${filename%.*}"
-    # kebab-case: lowercase, replace spaces/special chars with hyphens
-    name=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
+    name=$(normalize_name "$name")
 
-    track_dir="/workspace/site-root/hls/production/${name}"
+    track_dir="${OUTPUT_ROOT}/${output_category}/${name}"
+
     mkdir -p "${track_dir}/64k" "${track_dir}/128k" "${track_dir}/192k"
 
     ffmpeg -y -i "$input_file" \
@@ -39,5 +56,24 @@ for input_file in /workspace/transcode/staged/*; do
 #EXT-X-STREAM-INF:BANDWIDTH=192000,CODECS="mp4a.40.2"
 192k/stream.m3u8
 EOF
+}
 
-done
+process_category() {
+    category="$1"
+    staged_dir="${STAGED_ROOT}/${category}"
+
+    [ ! -d "$staged_dir" ] && return 0
+
+    for input_file in "$staged_dir"/*; do
+        [ -f "$input_file" ] || continue
+        transcode_file "$input_file" "$category"
+    done
+}
+
+mkdir -p "${STAGED_ROOT}/production"
+mkdir -p "${STAGED_ROOT}/live-performances"
+mkdir -p "${STAGED_ROOT}/mixes"
+
+process_category "production"
+process_category "live-performances"
+process_category "mixes"

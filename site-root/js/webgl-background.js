@@ -1,7 +1,6 @@
-(function() {
-  'use strict';
+import * as THREE from 'three';
 
-  var artworkImages = [
+var artworkImages = [
     'four-techs.jpg',
     'gateway-to-the-giant-stairs.jpg',
     'pareidolia-untitled.jpg',
@@ -12,35 +11,28 @@
   ];
 
   var CONFIG = {
-    ANIMATION_DURATION: 8000,
-    PAUSE_BETWEEN: 1500,
+    DESCENT_DURATION: 10000,      // 10 seconds top to bottom
+    DEFAULT_BPM: 60,              // 1 rotation/sec when no audio
+    MAX_ACTIVE_IMAGES: 3,         // 3 descending images max
     BASE_PLANE_HEIGHT: 3,
     CAMERA_Z: 10,
-    CORNER_Z_FAR: -5,
-    CENTER_Z_NEAR: 5,
-    FADE_ZONE: 0.15,
-    FRAME_WIDTH: 0.12,
-    FRAME_DEPTH: 0.08,
-    FRAME_COLOR: 0x5577AA
+    IMAGE_Z: 1.5,                 // All images on same Z plane
+    FRAME_WIDTH: 0.16,            // Medium frames
+    FRAME_DEPTH: 0.12,            // Medium depth for bevel
+    FRAME_COLOR: 0x6B4A3A,        // Taupe with mahogany hues
+    FADE_ZONE: 0.15,              // 15% fade at start/end
+    RULE_OF_THIRDS: {
+      UPPER: 1 / 3,
+      LOWER: 2 / 3
+    }
   };
-
-  var CORNERS = {
-    TOP_LEFT:     { x: -8, y:  5, z: CONFIG.CORNER_Z_FAR },
-    TOP_RIGHT:    { x:  8, y:  5, z: CONFIG.CORNER_Z_FAR },
-    BOTTOM_LEFT:  { x: -8, y: -5, z: CONFIG.CORNER_Z_FAR },
-    BOTTOM_RIGHT: { x:  8, y: -5, z: CONFIG.CORNER_Z_FAR }
-  };
-
-  var CORNER_KEYS = Object.keys(CORNERS);
 
   var canvas, renderer, scene, camera;
   var textureLoader, loadedTextures = [];
-  var currentPlane = null;
-  var currentCurve = null;
-  var animationStartTime = null;
-  var lastStartCorner = null;
+  var activeImages = [];
   var currentImageIndex = 0;
-  var isAnimating = false;
+  var lastFrameTime = 0;
+  var viewportBounds = null;
 
   function init() {
     canvas = document.getElementById('webgl-bg');
@@ -54,6 +46,7 @@
     setupCamera();
     setupLighting();
     setupResizeHandler();
+    calculateViewportBounds();
 
     textureLoader = new THREE.TextureLoader();
 
@@ -89,16 +82,46 @@
   }
 
   function setupLighting() {
-    var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Dim ambient for base visibility
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.05);
     scene.add(ambientLight);
 
-    var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 10);
-    scene.add(directionalLight);
+    // Target: middle center of rule of thirds (stage at z=1.5)
+    var stageCenter = new THREE.Vector3(0, 0, CONFIG.IMAGE_Z);
 
-    var fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-    fillLight.position.set(-3, -2, 5);
-    scene.add(fillLight);
+    // Mastercard trio - 3 lights in front of camera illuminating vertical middle
+    var mastercardLights = [
+      { pos: [-2.5, 0, 6], intensity: 1.5, penumbra: 0.5, angle: Math.PI / 3 },   // Left circle
+      { pos: [2.5, 0, 6],  intensity: 1.5, penumbra: 0.5, angle: Math.PI / 3 },   // Right circle
+      { pos: [0, 0, 5],    intensity: 2.5, penumbra: 0.4, angle: Math.PI / 4 }    // Center high intensity
+    ];
+
+    // Clover - 4 lights from viewport corners, lower intensity
+    var cloverLights = [
+      { pos: [-8, 6, 6],  intensity: 0.6, penumbra: 0.7, angle: Math.PI / 5 },   // Top-left
+      { pos: [8, 6, 6],   intensity: 0.6, penumbra: 0.7, angle: Math.PI / 5 },   // Top-right
+      { pos: [-8, -6, 6], intensity: 0.6, penumbra: 0.7, angle: Math.PI / 5 },   // Bottom-left
+      { pos: [8, -6, 6],  intensity: 0.6, penumbra: 0.7, angle: Math.PI / 5 }    // Bottom-right
+    ];
+
+    // Top light - directly above camera, tight penumbra, high intensity
+    var topLight = [
+      { pos: [0, 10, 10], intensity: 3.0, penumbra: 0.25, angle: Math.PI / 5 }
+    ];
+
+    var allLights = mastercardLights.concat(cloverLights).concat(topLight);
+
+    allLights.forEach(function(config) {
+      var spot = new THREE.SpotLight(0xffffff, config.intensity);
+      spot.position.set(config.pos[0], config.pos[1], config.pos[2]);
+      spot.target.position.copy(stageCenter);
+      spot.angle = config.angle;
+      spot.penumbra = config.penumbra;
+      spot.decay = 1.0;
+      spot.distance = 30;
+      scene.add(spot);
+      scene.add(spot.target);
+    });
   }
 
   function setupResizeHandler() {
@@ -109,6 +132,23 @@
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    calculateViewportBounds();
+  }
+
+  function calculateViewportBounds() {
+    var vFov = camera.fov * Math.PI / 180;
+    var distance = CONFIG.CAMERA_Z - CONFIG.IMAGE_Z;
+    var height = 2 * Math.tan(vFov / 2) * distance;
+    var width = height * camera.aspect;
+
+    viewportBounds = {
+      top: height / 2,
+      bottom: -height / 2,
+      left: -width / 2,
+      right: width / 2,
+      height: height,
+      width: width
+    };
   }
 
   function preloadTextures(callback) {
@@ -138,42 +178,12 @@
     });
   }
 
-  function getOppositeCorner(corner) {
-    var opposites = {
-      TOP_LEFT: 'BOTTOM_RIGHT',
-      TOP_RIGHT: 'BOTTOM_LEFT',
-      BOTTOM_LEFT: 'TOP_RIGHT',
-      BOTTOM_RIGHT: 'TOP_LEFT'
-    };
-    return opposites[corner];
-  }
-
-  function selectStartCorner() {
-    var availableCorners = CORNER_KEYS.filter(function(corner) {
-      return corner !== lastStartCorner;
-    });
-    var selected = availableCorners[
-      Math.floor(Math.random() * availableCorners.length)
-    ];
-    lastStartCorner = selected;
-    return selected;
-  }
-
-  function createCurve(startCornerKey, endCornerKey) {
-    var start = CORNERS[startCornerKey];
-    var end = CORNERS[endCornerKey];
-
-    var control = new THREE.Vector3(
-      (start.x + end.x) / 2,
-      (start.y + end.y) / 2,
-      CONFIG.CENTER_Z_NEAR
-    );
-
-    return new THREE.QuadraticBezierCurve3(
-      new THREE.Vector3(start.x, start.y, start.z),
-      control,
-      new THREE.Vector3(end.x, end.y, end.z)
-    );
+  function getRandomXPosition() {
+    if (!viewportBounds) calculateViewportBounds();
+    var padding = CONFIG.BASE_PLANE_HEIGHT * 0.6;
+    var minX = viewportBounds.left + padding;
+    var maxX = viewportBounds.right - padding;
+    return minX + Math.random() * (maxX - minX);
   }
 
   function calculateOpacity(t) {
@@ -195,13 +205,38 @@
     }
   }
 
+  function createBeveledFrameShape(width, height, frameWidth) {
+    var shape = new THREE.Shape();
+    var outerW = width + frameWidth * 2;
+    var outerH = height + frameWidth * 2;
+
+    // Outer rectangle
+    shape.moveTo(-outerW / 2, -outerH / 2);
+    shape.lineTo(outerW / 2, -outerH / 2);
+    shape.lineTo(outerW / 2, outerH / 2);
+    shape.lineTo(-outerW / 2, outerH / 2);
+    shape.lineTo(-outerW / 2, -outerH / 2);
+
+    // Inner rectangle (hole for image)
+    var hole = new THREE.Path();
+    hole.moveTo(-width / 2, -height / 2);
+    hole.lineTo(-width / 2, height / 2);
+    hole.lineTo(width / 2, height / 2);
+    hole.lineTo(width / 2, -height / 2);
+    hole.lineTo(-width / 2, -height / 2);
+    shape.holes.push(hole);
+
+    return shape;
+  }
+
   function createFrameMaterial() {
     return new THREE.MeshStandardMaterial({
-      color: CONFIG.FRAME_COLOR,
-      metalness: 0.4,
-      roughness: 0.3,
+      color: 0xB87333,        // Copper
+      metalness: 0.9,
+      roughness: 0.35,
       transparent: true,
-      opacity: 0
+      opacity: 0,
+      side: THREE.DoubleSide
     });
   }
 
@@ -216,50 +251,106 @@
 
     var group = new THREE.Group();
 
+    // Image plane - responds to spotlight
     var imageGeometry = new THREE.PlaneGeometry(width, height);
-    var imageMaterial = new THREE.MeshBasicMaterial({
+    var imageMaterial = new THREE.MeshStandardMaterial({
       map: texture,
       transparent: true,
       opacity: 0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      metalness: 0.1,
+      roughness: 0.8
     });
     var imageMesh = new THREE.Mesh(imageGeometry, imageMaterial);
     imageMesh.position.z = fd / 2;
     group.add(imageMesh);
 
+    // Beveled frame using ExtrudeGeometry
+    var frameShape = createBeveledFrameShape(width, height, fw);
+    var extrudeSettings = {
+      depth: fd,
+      bevelEnabled: true,
+      bevelThickness: fd * 0.3,
+      bevelSize: fw * 0.2,
+      bevelOffset: 0,
+      bevelSegments: 2
+    };
+
     var frameMaterial = createFrameMaterial();
-
-    var topGeom = new THREE.BoxGeometry(width + fw * 2, fw, fd);
-    var topMesh = new THREE.Mesh(topGeom, frameMaterial);
-    topMesh.position.set(0, height / 2 + fw / 2, 0);
-    group.add(topMesh);
-
-    var bottomMesh = new THREE.Mesh(topGeom, frameMaterial);
-    bottomMesh.position.set(0, -height / 2 - fw / 2, 0);
-    group.add(bottomMesh);
-
-    var sideGeom = new THREE.BoxGeometry(fw, height, fd);
-    var leftMesh = new THREE.Mesh(sideGeom, frameMaterial);
-    leftMesh.position.set(-width / 2 - fw / 2, 0, 0);
-    group.add(leftMesh);
-
-    var rightMesh = new THREE.Mesh(sideGeom, frameMaterial);
-    rightMesh.position.set(width / 2 + fw / 2, 0, 0);
-    group.add(rightMesh);
+    var frameGeometry = new THREE.ExtrudeGeometry(frameShape, extrudeSettings);
+    var frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+    frameMesh.rotation.x = Math.PI;
+    frameMesh.position.z = fd / 2;
+    group.add(frameMesh);
 
     group.userData.materials = [imageMaterial, frameMaterial];
 
     return group;
   }
 
-  function removePlane(plane) {
-    if (plane) {
-      scene.remove(plane);
-      plane.traverse(function(child) {
+  function removeImage(imgData) {
+    if (imgData.group) {
+      scene.remove(imgData.group);
+      imgData.group.traverse(function(child) {
         if (child.geometry) child.geometry.dispose();
         if (child.material) child.material.dispose();
       });
     }
+    var index = activeImages.indexOf(imgData);
+    if (index > -1) {
+      activeImages.splice(index, 1);
+    }
+  }
+
+  function getNextTexture() {
+    var validTextures = loadedTextures.filter(function(t) {
+      return t !== null;
+    });
+    if (validTextures.length === 0) return null;
+
+    var texture = validTextures[currentImageIndex % validTextures.length];
+    currentImageIndex++;
+    return texture;
+  }
+
+  function spawnNewImage() {
+    if (activeImages.length >= CONFIG.MAX_ACTIVE_IMAGES) return;
+
+    var texture = getNextTexture();
+    if (!texture) return;
+
+    var group = createPlane(texture);
+    if (!group) return;
+
+    var xPos = getRandomXPosition();
+    var yStart = viewportBounds.top + CONFIG.BASE_PLANE_HEIGHT;
+
+    group.position.set(xPos, yStart, CONFIG.IMAGE_Z);
+    setGroupOpacity(group, 0);
+
+    scene.add(group);
+
+    activeImages.push({
+      group: group,
+      startTime: performance.now(),
+      xPosition: xPos,
+      hasTriggeredSpawn: false
+    });
+  }
+
+  function getRotationSpeed() {
+    var bpm = CONFIG.DEFAULT_BPM;
+
+    if (window.camdenAudio && window.camdenAudio.isPlaying()) {
+      var bassIntensity = window.camdenAudio.getBassIntensity();
+      // Map bass intensity to BPM range (60-180)
+      var minBPM = 60;
+      var maxBPM = 180;
+      bpm = minBPM + bassIntensity * (maxBPM - minBPM);
+    }
+
+    // Convert BPM to radians per second (full rotation = 2*PI)
+    return (bpm / 60) * Math.PI * 2;
   }
 
   function startAnimation() {
@@ -272,66 +363,81 @@
       return;
     }
 
-    launchNextImage();
+    // Start with first image
+    spawnNewImage();
+    lastFrameTime = performance.now();
     animate();
-  }
-
-  function launchNextImage() {
-    if (currentPlane) {
-      removePlane(currentPlane);
-      currentPlane = null;
-    }
-
-    if (loadedTextures.length === 0) return;
-
-    var texture = loadedTextures[currentImageIndex];
-    currentImageIndex = (currentImageIndex + 1) % loadedTextures.length;
-
-    currentPlane = createPlane(texture);
-    if (!currentPlane) {
-      setTimeout(launchNextImage, 100);
-      return;
-    }
-
-    var startCorner = selectStartCorner();
-    var endCorner = getOppositeCorner(startCorner);
-    currentCurve = createCurve(startCorner, endCorner);
-
-    var startPos = currentCurve.getPoint(0);
-    currentPlane.position.copy(startPos);
-    setGroupOpacity(currentPlane, 0);
-
-    scene.add(currentPlane);
-
-    animationStartTime = performance.now();
-    isAnimating = true;
   }
 
   function animate() {
     requestAnimationFrame(animate);
 
-    if (isAnimating && currentPlane && currentCurve) {
-      var elapsed = performance.now() - animationStartTime;
-      var t = Math.min(elapsed / CONFIG.ANIMATION_DURATION, 1);
+    var now = performance.now();
+    var deltaTime = (now - lastFrameTime) / 1000; // Convert to seconds
+    lastFrameTime = now;
 
-      var position = currentCurve.getPoint(t);
-      currentPlane.position.copy(position);
+    var rotationSpeed = getRotationSpeed();
 
-      setGroupOpacity(currentPlane, calculateOpacity(t));
+    // Process each active image
+    var imagesToRemove = [];
+
+    activeImages.forEach(function(imgData) {
+      var elapsed = now - imgData.startTime;
+      var t = elapsed / CONFIG.DESCENT_DURATION;
 
       if (t >= 1) {
-        isAnimating = false;
-        setTimeout(launchNextImage, CONFIG.PAUSE_BETWEEN);
+        imagesToRemove.push(imgData);
+        return;
       }
+
+      // Calculate Y position (descending from top to bottom)
+      var yStart = viewportBounds.top + CONFIG.BASE_PLANE_HEIGHT;
+      var yEnd = viewportBounds.bottom - CONFIG.BASE_PLANE_HEIGHT;
+      var y = yStart - t * (yStart - yEnd);
+
+      imgData.group.position.y = y;
+
+      // Rotation logic based on rule of thirds
+      if (t < CONFIG.RULE_OF_THIRDS.UPPER) {
+        // Top third: rotating
+        imgData.group.rotation.y += rotationSpeed * deltaTime;
+      } else if (t > CONFIG.RULE_OF_THIRDS.LOWER) {
+        // Bottom third: rotating
+        imgData.group.rotation.y += rotationSpeed * deltaTime;
+      } else {
+        // Middle third: complete rotation forward to face camera
+        var currentRotation = imgData.group.rotation.y;
+        // Always round up to complete rotation in same direction
+        var fullRotations = Math.ceil(currentRotation / (Math.PI * 2));
+        var targetRotation = fullRotations * Math.PI * 2;
+        imgData.group.rotation.y += (targetRotation - currentRotation) * 0.1;
+      }
+
+      // Opacity
+      setGroupOpacity(imgData.group, calculateOpacity(t));
+
+      // Spawn next image at halfway point
+      if (!imgData.hasTriggeredSpawn && t >= 0.5) {
+        imgData.hasTriggeredSpawn = true;
+        spawnNewImage();
+      }
+    });
+
+    // Remove completed images
+    imagesToRemove.forEach(function(imgData) {
+      removeImage(imgData);
+    });
+
+    // Ensure at least one image is always descending
+    if (activeImages.length === 0 && loadedTextures.length > 0) {
+      spawnNewImage();
     }
 
     renderer.render(scene, camera);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-})();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
