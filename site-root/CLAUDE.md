@@ -29,8 +29,10 @@ site-root/
 └── hls/
     ├── production/         # Produced tracks
     │   └── {track}/master.m3u8
-    └── mixes/              # DJ mixes
-        └── {mix}/master.m3u8
+    ├── mixes/              # DJ mixes
+    │   └── {mix}/master.m3u8
+    └── live-performances/  # Live performance recordings
+        └── {performance}/master.m3u8
 ```
 
 **Key Flow:** `index.html` loads HLS.js from CDN, then `camden-wander.js` builds the track lists from arrays and initializes the HLS player with play/pause controls and seekable timeline.
