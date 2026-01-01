@@ -42,7 +42,9 @@ fi
 podman run --rm -it \
     --name "$CONTAINER_NAME" \
     --userns=keep-id \
+    -v "$GIT_ROOT:/workspace" \
     -v "$METADATA_DIR:/work/metadata:ro" \
     -v "$SEGMENTS_DIR:/work/segments:ro" \
     -v "$OUTPUT_DIR:/work/output:rw" \
+    -w /workspace \
     "$IMAGE_NAME"

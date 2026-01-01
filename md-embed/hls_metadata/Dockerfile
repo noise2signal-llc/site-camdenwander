@@ -26,10 +26,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /build/Bento4/bin /usr/local/bin/
 
-WORKDIR /work
+RUN useradd -m -u 1000 developer
 
 # Verifies installation
 RUN mp42hls --help || true && \
     mp4info --help || true
+
+USER developer
+WORKDIR /workspace
 
 CMD ["/bin/bash"]
