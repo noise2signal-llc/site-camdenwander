@@ -74,6 +74,56 @@ hls/{category}/{track-name}/
 
 **After transcoding:** Add track folder names to the corresponding array in `js/camden-wander.js`.
 
+## Metadata Embedding (md-embed/)
+
+Two containerized workflows for embedding metadata:
+
+### Image Metadata Tagger
+
+Tags artwork images with EXIF/IPTC/XMP metadata using exiftool.
+
+```
+md-embed/
+├── Dockerfile.tagger       # Alpine + exiftool + jq
+├── tag-artwork.sh          # Tagging script (reads hardcoded manifest)
+└── launch-tagger.sh        # Container launcher (--force-rebuild to recreate)
+```
+
+**Manifest:** `site-root/img/images.json`
+```json
+{
+  "artist": "Artist Name",
+  "current_name": "Legal Name (optional)",
+  "images": [
+    {
+      "file": "image.jpg",
+      "title": "Title",
+      "date": "YYYY-MM-DD",
+      "medium": "Medium (optional)",
+      "description": "Description (optional)"
+    }
+  ]
+}
+```
+
+**Usage:**
+```bash
+./md-embed/launch-tagger.sh
+```
+
+### HLS Timed Metadata (Bento4)
+
+Injects timed ID3 metadata into HLS segments for DJ mix track attribution.
+
+```
+md-embed/
+├── Dockerfile                      # Bento4 build (gcc:13 base)
+├── launch-metadata-injector.sh     # Interactive shell launcher
+└── bento4-hls-metadata-context.md  # Full documentation
+```
+
+**Usage:** See `md-embed/bento4-hls-metadata-context.md` for complete workflow.
+
 ## External Dependencies
 
 - HLS.js (CDN): `//cdn.jsdelivr.net/npm/hls.js` - adaptive bitrate streaming

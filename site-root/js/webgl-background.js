@@ -17,9 +17,9 @@ var artworkImages = [
     BASE_PLANE_HEIGHT: 3,
     CAMERA_Z: 10,
     IMAGE_Z: 1.5,                 // All images on same Z plane
-    FRAME_WIDTH: 0.16,            // Medium frames
+    FRAME_WIDTH: 0.04,            // Medium frames
     FRAME_DEPTH: 0.12,            // Medium depth for bevel
-    FRAME_COLOR: 0x6B4A3A,        // Taupe with mahogany hues
+    FRAME_COLOR: 0x6B4A3A,        // 
     FADE_ZONE: 0.15,              // 15% fade at start/end
     RULE_OF_THIRDS: {
       UPPER: 1 / 3,
@@ -256,7 +256,7 @@ var artworkImages = [
     var imageMaterial = new THREE.MeshStandardMaterial({
       map: texture,
       transparent: true,
-      opacity: 0,
+      opacity: 1,
       side: THREE.DoubleSide,
       metalness: 0.1,
       roughness: 0.8
@@ -270,10 +270,10 @@ var artworkImages = [
     var extrudeSettings = {
       depth: fd,
       bevelEnabled: true,
-      bevelThickness: fd * 0.3,
-      bevelSize: fw * 0.2,
+      bevelThickness: 0.07,
+      bevelSize: 0.07,
       bevelOffset: 0,
-      bevelSegments: 2
+      bevelSegments: 4
     };
 
     var frameMaterial = createFrameMaterial();

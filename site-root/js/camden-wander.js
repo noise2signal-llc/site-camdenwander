@@ -54,7 +54,8 @@ var producedTracks = [
 ];
 
 var livePerformances = [
-  // Add live performance folder names here
+  'three-wave-music-december-2024',
+  'modstock-woodstock-july-2025'
 ];
 
 var djMixes = [

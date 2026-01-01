@@ -5,11 +5,17 @@ Transcodes audio/video files to HLS format with adaptive bitrate streaming using
 ## Usage
 
 ```bash
+# Place source files in appropriate staged subdirectory:
+#   transcode/staged/production/
+#   transcode/staged/live-performances/
+#   transcode/staged/mixes/
+
 # Run from anywhere within the git repo
 ./transcode/launch-transcode.sh
-```
 
-Place source files in `transcode/staged/` before running.
+# Force rebuild container if needed
+./transcode/launch-transcode.sh --force-rebuild
+```
 
 ## Track Naming Convention
 
@@ -25,23 +31,18 @@ The folder name becomes the track identifier and is transformed to Title Case fo
 
 ## Adding New Tracks
 
-### Produced Tracks
 1. Name source file in kebab-case: `my-track-name.wav`
-2. Place in `transcode/staged/`
+2. Place in appropriate `transcode/staged/{category}/` subdirectory
 3. Run `./transcode/launch-transcode.sh`
-4. Add folder name to `producedTracks` array in `site-root/js/camden-wander.js`
-
-### DJ Mixes
-1. Name source file in kebab-case: `my-mix-name.wav`
-2. Place in `transcode/staged/`
-3. Run `./transcode/launch-transcode.sh`
-4. Move output from `site-root/hls/production/{name}/` to `site-root/hls/mixes/{name}/`
-5. Add folder name to `djMixes` array in `site-root/js/camden-wander.js`
+4. Add folder name to corresponding array in `site-root/js/camden-wander.js`:
+   - `producedTracks` for production/
+   - `livePerformances` for live-performances/
+   - `djMixes` for mixes/
 
 ## Files
 
-- `Dockerfile` - Alpine 3.19 container with ffmpeg
-- `launch-transcode.sh` - Podman launch script (uses git root for paths)
+- `Dockerfile` - Alpine container with ffmpeg
+- `launch-transcode.sh` - Podman launch script (--force-rebuild to recreate)
 - `generate-hls.sh` - Transcoding script that runs inside the container
 
 ## Output
@@ -53,19 +54,15 @@ site-root/hls/
   production/           # Produced tracks
     {track}/
       master.m3u8
-      64k/
-        stream.m3u8
-        seg_000.ts, ...
-      128k/
-        stream.m3u8
-        seg_000.ts, ...
-      192k/
-        stream.m3u8
-        seg_000.ts, ...
+      64k/ 128k/ 192k/
+  live-performances/    # Live recordings
+    {performance}/
+      master.m3u8
+      64k/ 128k/ 192k/
   mixes/                # DJ mixes
     {mix}/
       master.m3u8
       64k/ 128k/ 192k/
 ```
 
-Track names are normalized to kebab-case (lowercase, hyphens).
+Each category outputs 3 bitrate tiers (64k, 128k, 192k AAC) with adaptive bitrate master playlist.
