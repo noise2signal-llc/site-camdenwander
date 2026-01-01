@@ -88,7 +88,7 @@ md-embed/
 └── hls_metadata/                   # HLS timed ID3 metadata
     ├── Dockerfile                  # Bento4 build (gcc:13 base)
     ├── launch-hls-metadata-container.sh
-    └── CONTEXT.md                  # Full workflow documentation
+    └── CLAUDE.md                   # Full workflow documentation
 ```
 
 **Image Metadata:** Tags artwork with EXIF/IPTC/XMP using manifest at `site-root/img/images.json`.

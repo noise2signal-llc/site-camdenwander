@@ -48,7 +48,7 @@ Injects timed ID3 metadata into HLS MPEG-TS segments using Bento4. Used for DJ m
 **Files:**
 - `Dockerfile` - Bento4 build container (gcc:13 base, GPL v2)
 - `launch-hls-metadata-container.sh` - Interactive shell launcher
-- `CONTEXT.md` - Full workflow documentation
+- `CLAUDE.md` - Full workflow documentation
 
 **Usage:**
 ```bash
@@ -59,11 +59,11 @@ podman build -t localhost/bento4-hls:latest -f md-embed/hls_metadata/Dockerfile 
 ./md-embed/hls_metadata/launch-hls-metadata-container.sh
 ```
 
-See `hls_metadata/CONTEXT.md` for complete workflow including metadata JSON format and client-side playback integration.
+See `hls_metadata/CLAUDE.md` for complete workflow including metadata JSON format and client-side playback integration.
 
 ## Adding New Metadata Tools
 
 Future metadata embedding mechanisms should follow this pattern:
 1. Create subdirectory: `md-embed/{media_type}_metadata/`
 2. Include: `Dockerfile`, launcher script, processing script
-3. Document usage in this file and tool-specific `CONTEXT.md` if needed
+3. Document usage in this file and tool-specific `CLAUDE.md` if needed
