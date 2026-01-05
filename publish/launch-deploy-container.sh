@@ -34,7 +34,7 @@ fi
 podman run --rm \
     --name "$CONTAINER_NAME" \
     --userns=keep-id \
-    -v "$GIT_ROOT:/workspace:ro" \
+    -v "$GIT_ROOT:/workspace" \
     -v "$HOME/.s3cfg:/home/developer/.s3cfg:ro" \
     -w /workspace \
     "$IMAGE_NAME"

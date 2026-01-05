@@ -1,6 +1,7 @@
 var hls = null;
 var audio = document.getElementById('player');
 var playPauseBtn = document.getElementById('play-pause-btn');
+var playPauseBtnSvgText = document.getElementById('player-text');
 var timeline = document.getElementById('timeline');
 var timelinePlayed = document.getElementById('timeline-played');
 
@@ -69,30 +70,81 @@ function toTitleCase(str) {
   }).join(' ');
 }
 
+function measureSvgTextWidth(text) {
+  var tempAnchor = document.createElement('a');
+  tempAnchor.className = 'track-item';
+  tempAnchor.style.visibility = 'hidden';
+  tempAnchor.style.position = 'absolute';
+
+  var tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  var tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  tempText.textContent = text;
+
+  tempSvg.appendChild(tempText);
+  tempAnchor.appendChild(tempSvg);
+  document.body.appendChild(tempAnchor);
+
+  var computedStyle = window.getComputedStyle(tempText);
+  var fontSize = computedStyle.fontSize;
+  var fontFamily = computedStyle.fontFamily;
+
+  document.body.removeChild(tempAnchor);
+
+  var canvas = new OffscreenCanvas(1, 1);
+  var ctx = canvas.getContext('2d');
+  ctx.font = fontSize + ' ' + fontFamily;
+  var metrics = ctx.measureText(text);
+  return metrics.width;
+}
+
 function buildTrackList(tracks, containerId, basePath) {
   var container = document.getElementById(containerId);
   if (!container) return;
 
-  var ul = container.querySelector('ul');
-  ul.innerHTML = '';
-
   if (tracks.length === 0) {
-    var li = document.createElement('li');
-    li.className = 'coming-soon';
-    li.textContent = 'Coming soon...';
-    ul.appendChild(li);
+    var comingSoon = document.createElement('p');
+    comingSoon.style.textAlign = 'center';
+    comingSoon.style.color = '#008080';
+    comingSoon.textContent = 'Coming soon...';
+    container.appendChild(comingSoon);
     return;
   }
 
   tracks.forEach(function(track) {
-    var li = document.createElement('li');
-    var btn = document.createElement('button');
-    btn.className = 'track-btn';
-    btn.setAttribute('data-src', basePath + track + '/master.m3u8');
-    btn.textContent = toTitleCase(track);
-    btn.addEventListener('click', handleTrackClick);
-    li.appendChild(btn);
-    ul.appendChild(li);
+    var anchor = document.createElement('a');
+    anchor.className = 'track-item';
+    anchor.setAttribute('data-src', basePath + track + '/master.m3u8');
+    anchor.addEventListener('click', handleTrackClick);
+
+    var titleText = toTitleCase(track);
+    var svgTextWidth = measureSvgTextWidth(titleText);
+    var svgTrapezoidWidth = svgTextWidth + 168;
+
+    var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('y', '16');
+    text.textContent = titleText;
+
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', svgTrapezoidWidth+20);
+    svg.setAttribute('height', 30);
+
+    var polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+
+    if (container.classList.contains('track-group-right')) {
+      text.setAttribute('x', svgTrapezoidWidth - 84);
+      text.setAttribute('text-anchor', 'end');
+      // polygon.setAttribute('points', `${svgTrapezoidWidth - 20},30 ${svgTrapezoidWidth - 80},0 0,0 80,30`);
+      polygon.setAttribute('points', `80,30 0,0 ${svgTrapezoidWidth - 80},0 ${svgTrapezoidWidth},30`);
+    } else {
+      text.setAttribute('x', '84');
+      text.setAttribute('text-anchor', 'start');
+      polygon.setAttribute('points', `20,30 80,0 ${svgTrapezoidWidth},0 ${svgTrapezoidWidth - 80},30`);
+    }
+
+    svg.appendChild(polygon);
+    svg.appendChild(text);
+    anchor.appendChild(svg);
+    container.appendChild(anchor);
   });
 }
 
@@ -116,7 +168,7 @@ function handleTrackClick() {
   document.querySelectorAll('.track-active').forEach(function(el) {
     el.classList.remove('track-active');
   });
-  this.parentElement.classList.add('track-active');
+  this.classList.add('track-active');
   var src = this.getAttribute('data-src');
   loadTrack(src);
 }
@@ -132,12 +184,12 @@ playPauseBtn.addEventListener('click', function() {
 
 audio.addEventListener('play', function() {
   initAudioAnalysis();
-  playPauseBtn.textContent = PAUSE_ICON;
+  playPauseBtnSvgText.textContent = PAUSE_ICON;
   playPauseBtn.classList.add('playing');
 });
 
 audio.addEventListener('pause', function() {
-  playPauseBtn.textContent = PLAY_ICON;
+  playPauseBtnSvgText.textContent = PLAY_ICON;
   playPauseBtn.classList.remove('playing');
 });
 
@@ -164,7 +216,7 @@ audio.addEventListener('ended', function() {
   document.querySelectorAll('.track-active').forEach(function(el) {
     el.classList.remove('track-active');
   });
-  playPauseBtn.textContent = PLAY_ICON;
+  playPauseBtnSvgText.textContent = PLAY_ICON;
   playPauseBtn.classList.remove('playing');
   playPauseBtn.disabled = true;
   timelinePlayed.style.width = '0%';

@@ -1,0 +1,40 @@
+{
+  "artist": "Camden Wander",
+  "production": [
+    {
+      "file": "creeping-insolence",
+      "title": "Creeping Insolence",
+      "date": "2024"
+    },
+    {
+      "file": "multiplicitous-incidents-of-trauma",
+      "title": "Multiplicitous Incidents of Trauma",
+      "date": "2024"
+    },
+    {
+      "file": "rude-introduction",
+      "title": "Rude Introduction",
+      "date": "2024"
+    },
+    {
+      "file": "wading-in",
+      "title": "Wading In",
+      "date": "2024"
+    }
+  ],
+  "live-performances": [
+    {
+      "file": "three-wave-music-december-2024",
+      "title": "Three Wave Music",
+      "date": "2024-12",
+      "venue": "Three Wave Music, Brooklyn"
+    },
+    {
+      "file": "modstock-woodstock-july-2025",
+      "title": "Modstock",
+      "date": "2025-07",
+      "venue": "Woodstock, NY"
+    }
+  ],
+  "mixes": []
+}
