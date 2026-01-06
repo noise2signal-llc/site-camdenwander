@@ -1,5 +1,5 @@
 body {
-	background-color: #0F0D08;
+	background-color: #00273D;
 	margin: 0;
 	min-height: 100vh;
 	display: flex;
@@ -19,12 +19,32 @@ body {
 	flex: 1;
 }
 
-p.title-bar {
-	font: bold 48px 'Orbitron', monospace;
+#title {
 	text-align: center;
-	color: #00B0B0;
-	margin-bottom: 10px;
-	text-shadow: 5px 5px 16px #8400C3;
+	padding: 2rem 1rem 0;
+}
+
+p.title-bar {
+	font: bold 36px 'Orbitron', monospace;
+	text-align: center;
+	color: #00273D;
+	background: #31EDAE;
+	border: 4px solid #FF5757;
+	padding: 1rem 2rem;
+	margin: 0 auto;
+	max-width: 600px;
+	clip-path: polygon(60px 0, calc(100% - 60px) 0, 100% 100%, 0 100%);
+}
+
+.subtitle {
+	background-color: #5E17EB;
+	color: #E6E6E6;
+	font: 500 16px 'Rubik', sans-serif;
+	padding: 0.5rem 4rem;
+	margin: 1rem auto;
+	max-width: 700px;
+	clip-path: polygon(80px 0, calc(100% - 80px) 0, 100% 100%, 0 100%);
+	text-align: left;
 }
 
 .media-list {
@@ -33,97 +53,165 @@ p.title-bar {
 	flex-direction: row;
 	flex-wrap: wrap;
 	column-gap: 2rem;
-	row-gap: 100px;
+	row-gap: 2rem;
+	justify-content: center;
 }
 
 .track-group {
-	flex: min-content;
-	max-width: calc(50% - 1rem);
+	flex: 0 1 auto;
+	max-width: 600px;
+	min-width: 300px;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	overflow-x: clip;
-}
-
-.track-group-left {
-	align-items: flex-start;
-}
-
-.track-group-left .section-header,
-.track-group-left .track-item {
-	align-self: flex-start;
-}
-
-.track-group-right {
-	align-items: flex-end;
-	margin-top: 100px;
-}
-
-.track-group-right .section-header,
-.track-group-right .track-item {
-	align-self: flex-end;
+	align-items: center;
 }
 
 @media (max-width: 1080px) {
 	.media-list {
 		flex-direction: column;
-		gap: 4px;
+		gap: 2rem;
 	}
 
 	.track-group {
 		max-width: none;
-	}
-
-	.track-group-right {
-		margin-top: 0;
+		width: 100%;
 	}
 }
 
+.section-header {
+	margin-bottom: 1rem;
+}
+
 .section-header svg polygon {
-	fill: #00B0B0;
-	stroke: #FFFF00;
+	fill: #31EDAE;
+	stroke: #FF5757;
 	stroke-width: 4px;
 }
 
 .section-header svg text {
-	fill: #8400C3;
+	fill: #00273D;
 	font-family: 'Orbitron', sans-serif;
 	font-size: 24px;
 	font-weight: bold;
 	dominant-baseline: middle;
 }
 
-.track-item svg polygon {
-	fill: #00B0B0;
-	stroke: orangered;
-	stroke-width: 3px;
+.track-wrapper {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
 }
 
-.track-item svg text {
-	fill: #8400C3;
-	font-family: 'Orbitron', sans-serif;
-	font-size: 18px;
+.track-item {
+	position: relative;
+	margin-left: 4px;
+}
+
+.track-item-bg {
+	fill: #5E17EB;
+	stroke: #E6E6E6;
+	stroke-width: 2px;
+}
+
+.track-item-text {
+	fill: #E6E6E6;
+	font-family: 'Rubik', sans-serif;
+	font-size: 16px;
+	font-weight: bold;
 	dominant-baseline: middle;
 }
 
-.track-item:hover svg polygon {
-	filter: drop-shadow(0 0 8px #FFFF00);
+.track-info-icon {
+	fill: #E6E6E6;
+	font-family: 'Rubik', sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+	dominant-baseline: middle;
 	cursor: pointer;
 }
 
-.track-item:hover svg text {
+.track-info-icon:hover {
 	fill: #FFFF00;
 }
 
-.track-item.track-active svg polygon {
+.track-play-icon {
+	fill: #E6E6E6;
+	font-family: 'Orbitron', sans-serif;
+	font-size: 14px;
+	dominant-baseline: middle;
+	cursor: pointer;
+}
+
+.track-play-icon:hover {
+	fill: #FFFF00;
+}
+
+.track-item:hover .track-item-bg {
+	stroke: #FFFF00;
+	stroke-width: 3px;
+}
+
+.track-item.track-active .track-item-bg {
 	fill: #8400C3;
-	filter: drop-shadow(0 0 8px #FFFF00);
+	stroke: #FFFF00;
+	stroke-width: 3px;
+	filter: drop-shadow(0 0 8px #FF6B4A);
 }
 
-.track-item.track-active svg text {
-	fill: #FFFF00;
+.track-item.track-active::before,
+.track-item.track-active::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	width: 0;
+	height: 0;
+	border-style: solid;
 }
 
+.track-item.track-active::before {
+	left: -40px;
+	border-width: 15px 0 15px 40px;
+	border-color: transparent transparent transparent #FF6B4A;
+}
+
+.track-item.track-active::after {
+	right: -40px;
+	border-width: 15px 40px 15px 0;
+	border-color: transparent #FF6B4A transparent transparent;
+}
+
+.info-panel {
+	margin-left: 4px;
+	margin-top: 0.5rem;
+}
+
+.info-panel-bg {
+	fill: #F5E6D3;
+	stroke: #FF6B4A;
+	stroke-width: 2px;
+}
+
+.info-panel-text {
+	fill: #1A4C4C;
+	font-family: 'Rubik', sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	dominant-baseline: middle;
+}
+
+.info-panel-close {
+	fill: #FF6B4A;
+	font-family: 'Rubik', sans-serif;
+	font-size: 18px;
+	font-weight: bold;
+	dominant-baseline: middle;
+}
+
+.info-panel-close:hover {
+	fill: #1A4C4C;
+}
 
 .controls {
 	display: flex;
@@ -144,34 +232,26 @@ p.title-bar {
 }
 
 .play-pause-btn svg polygon {
-	fill: #8400C3;
-	stroke: #00B0B0;
+	fill: #5E17EB;
+	stroke: #FF6B4A;
 	stroke-width: 3px;
 }
 
 .play-pause-btn svg text {
-	fill: #00D0D0;
+	fill: #E6E6E6;
 	text-anchor: middle;
 	font-size: 24px;
 	font-family: 'Orbitron', sans-serif;
 }
 
-.play-pause-btn.playing {
-	border-color: #FFFF00;
-	color: #FFFF00;
-}
-
 .play-pause-btn.playing svg polygon {
-	fill: #8400C3;
+	fill: #FF6B4A;
 	stroke: #FFFF00;
 	stroke-width: 3px;
 }
 
 .play-pause-btn.playing svg text {
-	fill: #FFFF00;
-	text-anchor: middle;
-	font-size: 24px;
-	font-family: 'Orbitron', sans-serif;
+	fill: #1A4C4C;
 }
 
 @keyframes flash {
@@ -179,12 +259,12 @@ p.title-bar {
     opacity: 1;
   }
   50% {
-    opacity: 0;
+    opacity: 0.5;
   }
 }
 
 .play-pause-btn:hover:not(:disabled) {
-	animation: flash 0.5s linear infinite; 
+	animation: flash 0.5s linear infinite;
 }
 
 .play-pause-btn:disabled {
@@ -195,20 +275,44 @@ p.title-bar {
 .timeline {
 	flex: 1;
 	height: 10px;
-	background-color: #FFFF00;
+	background-color: #FFF3C2;
 	cursor: pointer;
 	position: relative;
 	clip-path: polygon(0px 0px, 20px 10px, 100% 100%, calc(100% - 20px) 0%);
+	font-family: 'Orbitron', sans-serif;
+	font-size: 10px;
+	color: #1A4C4C;
+}
+
+.timeline::after {
+	content: attr(data-remaining);
+	position: absolute;
+	left: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-family: 'Orbitron', sans-serif;
+	font-size: 10px;
+	color: #1A4C4C;
+	white-space: nowrap;
+	pointer-events: none;
 }
 
 .timeline-played {
 	height: 100%;
-	background-color: #8400C3;
+	background-color: #5E17EB;
 	width: 0%;
 	position: absolute;
 	left: 0;
 	top: 0;
 	clip-path: polygon(0px 0px, 20px 10px, 100% 100%, calc(100% - 20px) 0%);
+	font-family: 'Orbitron', sans-serif;
+	font-size: 10px;
+	color: #FFF3C2;
+	text-align: right;
+	padding-right: 4px;
+	line-height: 10px;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 #footer {
@@ -219,5 +323,5 @@ p.title-bar {
 #footer p {
 	margin: 0;
 	font: 12px 'Rubik', sans-serif;
-	color: #008080;
+	color: #00CCCC;
 }
