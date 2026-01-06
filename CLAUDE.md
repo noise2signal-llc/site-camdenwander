@@ -4,10 +4,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Container Environment
 
-Claude Code runs inside a container. The /workspace/ directory is the git repository root, mounted from the host. Git operations (commit, push, pull, branch management) are performed by the user on the container host, not by Claude. Do not execute git commands; file changes made in /workspace/ will be visible to the host user for version control.
+Claude Code runs inside a container. The /workspace/ directory is a host directory mounted into the container. Git operations (commit, push, pull, branch management) are performed by the user on the container host, not by Claude. Do not execute git commands; file changes made in /workspace/ will be visible to the host user for version control.
+
+### Claude Code Container Launcher
+
+A generalized Claude Code container launcher is available at the repository root:
+
+```bash
+# Launch Claude Code container (prompts for workspace directory)
+./launch-claude-code-container.sh
+
+# Force rebuild if needed
+./launch-claude-code-container.sh --force-rebuild
+```
+
+The launcher:
+- Prompts for a host directory to mount as `/workspace` (supports tab-completion)
+- Generates a unique container name based on the workspace path
+- Allows multiple container instances for different projects simultaneously
+- Container name format: `claude-code-{dirname}-{hash}`
+
+This allows working on multiple projects in separate container sessions.
 
 ## Container Standards
 
+**Portfolio Site Containers:**
+- **Development Server:** Apache httpd (Alpine-based, serves site-root on port 8080)
+- **Deployment:** Debian slim with s3cmd (publishes to Linode Object Storage)
+
+**Claude Code Development:**
+- **Claude Code Container:** Generalized development environment (can work on any project)
+- **Multiple Instances:** Different projects can have separate container sessions simultaneously
+
+**Out of Scope (moved to `/workspace/scope-creep/`):**
 Containerized workflows for transcoding and metadata embedding have been moved to `/workspace/scope-creep/` as they are out of scope for this focused live performance portfolio. Each subdirectory in `/workspace/scope-creep/` contains its own CLAUDE.md with usage examples following project-wide container standards (Podman, uid 1000, minimal base images, launch scripts with `--force-rebuild` support).
 
 ## Project Overview
@@ -18,13 +47,25 @@ Static HTML5 portfolio site for electronic music artist Camden Wander, featuring
 
 ## Development Server
 
+The portfolio site uses an Apache httpd container for local development:
+
 ```bash
-# Start HTTP server (from site-root directory)
-cd /workspace/site-root
-python3 -m http.server 8080
+# Start development server
+./site-root/dev-server/launch-server.sh
+
+# Force rebuild container if needed
+./site-root/dev-server/launch-server.sh --force-rebuild
+
+# Stop server
+podman stop portfolio-site-dev-server
+
+# Remove container
+podman rm portfolio-site-dev-server
 ```
 
 Access at: http://localhost:8080
+
+The server mounts `site-root/` to `/srv/www/html` (read-only) and serves on port 8080.
 
 ## Architecture
 
@@ -100,7 +141,7 @@ Deploys site-root to Linode Object Storage via s3cmd.
 
 ```
 publish/
-├── Dockerfile                  # Debian + ca-certificates + s3cmd, developer user
+├── Containerfile                  # Debian + ca-certificates + s3cmd, developer user
 ├── bucket-policy.json          # Public read policy for bucket
 ├── deploy.sh                   # s3cmd sync with exclusions
 └── launch-deploy-container.sh  # Mounts ~/.s3cfg

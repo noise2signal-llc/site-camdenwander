@@ -17,7 +17,7 @@ if [[ "$1" == "--force-rebuild" ]]; then
 fi
 
 if [[ "$FORCE_REBUILD" == true ]] || ! podman image exists "$IMAGE_NAME"; then
-    podman build -t "$IMAGE_NAME" -f "$GIT_ROOT/publish/Dockerfile" "$GIT_ROOT/publish"
+    podman build -t "$IMAGE_NAME" -f "$GIT_ROOT/publish/Containerfile" "$GIT_ROOT/publish"
 fi
 
 if [[ "$FORCE_REBUILD" == true ]]; then
