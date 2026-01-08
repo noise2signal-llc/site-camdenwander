@@ -89,120 +89,95 @@ body {
 	margin-top: 4px;
 }
 
-.track-wrapper {
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-}
-
-.track-item {
-	position: relative;
-	margin-left: 4px;
-}
-
 .track-listing {
 	fill: #5E17EB;
 	stroke: #E6E6E6;
 	stroke-width: 4px;
 }
 
-.track-item-text {
-	fill: #E6E6E6;
-	font-family: 'Rubik', sans-serif;
-	font-size: 16px;
-	font-weight: bold;
-	dominant-baseline: middle;
+.track-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 4px 0;
+	margin-left: 84px;
 }
 
-.track-info-icon {
-	fill: #E6E6E6;
-	font-family: 'Rubik', sans-serif;
-	font-size: 14px;
-	font-weight: bold;
-	dominant-baseline: middle;
-	cursor: pointer;
+.track-item.track-active {
+	filter: drop-shadow(0 0 4px #FFFF00);
 }
 
-.track-info-icon:hover {
-	fill: #FFFF00;
-}
-
-.track-play-icon {
-	fill: #E6E6E6;
+.track-queuer,
+.track-info-toggle {
 	font-family: 'Orbitron', sans-serif;
 	font-size: 14px;
-	dominant-baseline: middle;
+	color: #FFF3C2;
 	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.2s;
 }
 
-.track-play-icon:hover {
-	fill: #FFFF00;
+.track-queuer:hover,
+.track-info-toggle:hover {
+	color: #FFFF00;
 }
 
-.track-item:hover .track-item-bg {
-	stroke: #FFFF00;
-	stroke-width: 3px;
+.track-item.track-active .track-queuer,
+.track-item.track-active .track-info-toggle {
+	color: #FFFF00;
 }
 
-.track-item.track-active .track-item-bg {
-	fill: #8400C3;
-	stroke: #FFFF00;
-	stroke-width: 3px;
-	filter: drop-shadow(0 0 8px #FF6B4A);
+.track-name {
+	font-family: 'Rubik', sans-serif;
+	font-size: 16px;
+	font-weight: 500;
+	color: #FFF3C2;
 }
 
-.track-item.track-active::before,
-.track-item.track-active::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	width: 0;
-	height: 0;
-	border-style: solid;
+.track-info-panel {
+	margin-left: 84px;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	overflow: hidden;
+	transition: max-height 0.3s ease-out;
 }
 
-.track-item.track-active::before {
-	left: -40px;
-	border-width: 15px 0 15px 40px;
-	border-color: transparent transparent transparent #FF6B4A;
+.info-panel-content {
+	background-color: #F5E6D3;
+	border: 2px solid #FF5757;
+	padding: 12px 16px;
+	border-radius: 4px;
 }
 
-.track-item.track-active::after {
-	right: -40px;
-	border-width: 15px 40px 15px 0;
-	border-color: transparent #FF6B4A transparent transparent;
-}
-
-.info-panel {
-	margin-left: 4px;
-	margin-top: 0.5rem;
-	color: #00273D;
-}
-
-.info-panel-bg {
-	fill: #F5E6D3;
-	stroke: #FF6B4A;
-	stroke-width: 2px;
-}
-
-.info-panel-text {
-	fill: #1A4C4C;
+.info-panel-content p {
+	margin: 4px 0;
 	font-family: 'Rubik', sans-serif;
 	font-size: 14px;
 	font-weight: 500;
-	dominant-baseline: middle;
+	color: #00273D;
 }
 
 .info-panel-close {
-	fill: #FF6B4A;
+	display: block;
+	text-align: right;
+	margin-top: 4px;
+	margin-right: 4px;
+	margin-bottom: 8px;
 	font-family: 'Rubik', sans-serif;
-	font-size: 18px;
-	font-weight: bold;
-	dominant-baseline: middle;
+	font-size: 14px;
+	color: #00273D;
+	text-decoration: underline;
+	cursor: pointer;
 }
 
 .info-panel-close:hover {
-	fill: #1A4C4C;
+	color: #FF5757;
+}
+
+.close-x {
+	font-family: 'Orbitron', sans-serif;
+	text-decoration: none;
+	margin-left: 4px;
 }
 
 .controls {
@@ -252,55 +227,49 @@ body {
 }
 
 .timeline {
-	flex: 1;
 	height: 30px;
+	width: 100%;
 	background-color: #FFF3C2;
-	cursor: pointer;
-	position: relative;
 	clip-path: polygon(0px 0px, 20px 30px, 100% 100%, calc(100% - 20px) 0%);
-	font-family: 'Orbitron', sans-serif;
-	font-size: 10px;
-	color: #5E17EB;
-	overflow: hidden;
-}
-
-.timeline::after {
-	content: attr(data-remaining);
-	position: absolute;
-	left: 4px;
-	top: 50%;
-	transform: translateY(-50%);
-	font-family: 'Orbitron', sans-serif;
-	font-size: 10px;
-	color: #5E17EB;
+	cursor: pointer;
 	white-space: nowrap;
-	pointer-events: none;
+	display: flex;
+	overflow: clip;
+	gap: 0px;
 }
 
-.timeline-played {
+.timeline-status {
+	font: 12px 'Orbitron', sans-serif;
+	overflow: clip;
+	margin-top: 8px;
+}
+
+#timeline-played {
 	height: 100%;
 	background-color: #5E17EB;
-	width: 0%;
-	position: absolute;
-	left: 0;
-	top: 0;
 	clip-path: polygon(0px 0px, 20px 30px, 100% 100%, calc(100% - 20px) 0%);
-	font-family: 'Orbitron', sans-serif;
-	font-size: 10px;
-	color: #FFF3C2;
-	text-align: right;
-	padding-right: 20px;
-	line-height: 10px;
-	overflow: hidden;
-	white-space: nowrap;
 }
 
-#footer {
-	text-align: center;
+#played-status {
+	color: #FFF3C2;
+	text-align: right;
+	margin-right: 16px;
+	margin-left: -400px;
+}
+
+#timeline-queued {
+	height: 100%;
+}
+
+#queued-status {
+	color: #5E17EB;
+	text-align: left;
+	margin-left: 8px;
 }
 
 #footer p {
 	margin: 0;
 	font: 12px 'Rubik', sans-serif;
-	color: #00CCCC;
+	color: #FFF3C2;
+	text-align: center;
 }
