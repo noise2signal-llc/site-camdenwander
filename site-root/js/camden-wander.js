@@ -168,7 +168,7 @@ function updateTimelineText() {
   var playedText = trackTitle + ' >>> ' + formatTime(timePlayed);
   var queuedText = '-' + formatTime(timeRemaining) + ' <<< ' + trackTitle;
 
-  timelinePlayed.style.width = playedWidth;
+  timelinePlayed.style.width = playedWidth + 20;
   timelinePlayedStatus.textContent = playedText;
   timelineQueuedStatus.textContent = queuedText;
 }
