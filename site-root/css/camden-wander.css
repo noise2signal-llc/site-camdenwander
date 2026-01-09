@@ -1,22 +1,25 @@
 body {
-	background-color: #00273D;
+	background-color: #011724;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	box-sizing: border-box;
+	min-height: 100vh;
+	gap: 0px;
 }
 
 /* headings: orange border with green inlay, Orbitron font */
 
 .heading-border {
-	background-color: #FF5757;
+	background-color: #FF6435;
 	display: flex;
 	width: 100%;
 	z-index: 2;
 }
 
 .heading-block {
-	background-color: #31EDAE;
-	color: #00273D;
+	background-color: #6AF794;
+	color: #011724;
 	font-family: 'Orbitron', monospace;
 	width: 100%;
 }
@@ -31,7 +34,7 @@ body {
 }
 
 .group-block {
-	background-color: #5E17EB;
+	background-color: #2A0F64;
 	font: 500 16px 'Rubik', sans-serif;
 	width: 100%;
 	height: 100%;
@@ -79,6 +82,7 @@ p.title {
 
 #media-list {
 	flex: 1;
+	box-sizing: bound
 }
 
 .media-list {
@@ -120,7 +124,7 @@ p.title {
 
 .section-heading {
 	font: 24px 'Orbitron', sans-serif;
-	color: #00273D;
+	color: #011724;
 	margin: auto;
 	margin-top: 6px;
 	margin-left: 42px;
@@ -192,7 +196,7 @@ li:first-child {
 
 .info-panel-content {
 	background-color: #F5E6D3;
-	border: 2px solid #FF5757;
+	border: 2px solid #FF6435;
 	padding: 12px 4px;
 	border-radius: 4px;
 }
@@ -219,7 +223,7 @@ li:first-child {
 }
 
 .info-panel-close:hover {
-	color: #FF5757;
+	color: #FF6435;
 }
 
 .close-x {
@@ -258,7 +262,7 @@ li:first-child {
 }
 
 #player-text {
-	color: #5E17EB;
+	color: #2A0F64;
 	font: 22px 'Orbitron', sans-serif;
 	text-align: center;
 	margin: auto;
@@ -304,7 +308,7 @@ li:first-child {
 #timeline-played {
 	height: 100%;
 	min-width: 20px;
-	background-color: #5E17EB;
+	background-color: #2A0F64;
 	clip-path: polygon(0px 0px, 20px 30px, 100% 100%, calc(100% - 20px) 0%);
 	overflow: clip;
 }
@@ -321,15 +325,14 @@ li:first-child {
 }
 
 #queued-status {
-	color: #5E17EB;
+	color: #2A0F64;
 	text-align: left;
 	margin-left: 0px;
 	margin-right: -400px;
 }
 
-#footer p {
-	margin: 0;
+#footer {
 	font: 12px 'Rubik', sans-serif;
-	color: #5E17EB;
-	text-align: center;
+	color: #2A0F64;
+	line-height: 0px;
 }
