@@ -1,7 +1,7 @@
 var hls = null;
 var audio = document.getElementById('player');
-var playPauseBtn = document.getElementById('play-pause-btn');
-var playPauseBtnText = document.getElementById('player-text');
+var playControl = document.getElementById('play-control');
+var playControlText = document.getElementById('player-text');
 var timeline = document.getElementById('timeline');
 var timelinePlayed = document.getElementById('timeline-played');
 var timelinePlayedStatus = document.getElementById('played-status');
@@ -28,7 +28,7 @@ function loadTrack(src, trackId, trackTitle) {
   hls = new Hls();
   hls.attachMedia(audio);
   hls.on(Hls.Events.MANIFEST_PARSED, function() {
-    playPauseBtn.disabled = false;
+    playControl.disabled = false;
     audio.play();
   });
   hls.on(Hls.Events.ERROR, function(event, data) {
@@ -108,7 +108,7 @@ function initializeTrackListeners() {
 
 /* player controls */
 
-playPauseBtn.addEventListener('click', function() {
+playControl.addEventListener('click', function() {
   if (this.disabled) return;
   if (audio.paused) {
     audio.play();
@@ -118,8 +118,8 @@ playPauseBtn.addEventListener('click', function() {
 });
 
 audio.addEventListener('play', function() {
-  playPauseBtnText.textContent = PAUSE_ICON;
-  playPauseBtn.classList.add('playing');
+  playControlText.textContent = PAUSE_ICON;
+  playControl.classList.add('playing');
 
   if (currentTrackData) {
     var activeItem = document.querySelector('.track-item[data-id="' + currentTrackData.id + '"]');
@@ -131,8 +131,8 @@ audio.addEventListener('play', function() {
 });
 
 audio.addEventListener('pause', function() {
-  playPauseBtnText.textContent = PLAY_ICON;
-  playPauseBtn.classList.remove('playing');
+  playControlText.textContent = PLAY_ICON;
+  playControl.classList.remove('playing');
 
   if (currentTrackData) {
     var activeItem = document.querySelector('.track-item[data-id="' + currentTrackData.id + '"]');
@@ -190,9 +190,9 @@ audio.addEventListener('ended', function() {
     el.classList.remove('track-active');
     el.querySelector('.track-queuer').textContent = PLAY_ICON;
   });
-  playPauseBtnText.textContent = PLAY_ICON;
-  playPauseBtn.classList.remove('playing');
-  playPauseBtn.disabled = true;
+  playControlText.textContent = PLAY_ICON;
+  playControl.classList.remove('playing');
+  playControl.disabled = true;
   timelinePlayed.style.width = '0%';
   currentTrackData = null;
 });
