@@ -65,7 +65,14 @@ site-root/
 
 **Key Flow:** `index.html` loads HLS.js from CDN and contains static track listings. `camden-wander.js` handles info panel toggles, HLS playback, and timeline updates.
 
-**Static Architecture:** Track listings are written directly in `index.html` as `<li>` elements. JavaScript attaches event listeners to these static elements for interactivity. Track metadata in `tracks.json` is reference data only.
+**Static Architecture:** Track listings are written directly in `index.html` as `<li>` elements. JavaScript attaches event listeners to these static elements for interactivity.
+
+**Metadata Source of Truth:** HLS manifest `#EXT-X-SESSION-DATA` tags are the canonical source for track metadata. HTML info panels mirror manifest values for immediate display (no HTTP request required before panel open). Timeline displays manifest `com.noise2signal-llc.title` during playback after `MANIFEST_PARSED` event.
+
+**Info Panel Structure:**
+- **Movements:** Date, Duration
+- **Performances:** Date, Venue, Duration
+Both categories subject to future augmentation.
 
 **Cache Busting:** `index.html` contains `CACHE_VERSION` placeholders in CSS and JS URLs (`?v=CACHE_VERSION`). The deployment script replaces these with Unix timestamps to force browser cache invalidation.
 
@@ -116,7 +123,10 @@ s3cmd ws-create --ws-index=index.html --ws-error=nope.html s3://camden-wander/
 
 ## External Dependencies
 
-- HLS.js (CDN): `//cdn.jsdelivr.net/npm/hls.js` - adaptive bitrate streaming
+- HLS.js v1.6.15 (CDN): `https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js` - adaptive bitrate streaming
+  - Version pinned for stability and reproducibility
+  - SRI hash (`sha384-iZBI1/lW9u8FcBjxuQ8nPTsU7TXhZNtzkV8H3gQHSTgz+VYQoKWqGlBHqhO84alJ`) protects against CDN compromise and supply chain attacks
+  - `crossorigin="anonymous"` attribute required for SRI verification
 - Google Fonts: Orbitron (titles, section headers, player controls), Rubik (track titles, info panels, body text)
 
 ## Code Style
@@ -145,9 +155,44 @@ s3cmd ws-create --ws-index=index.html --ws-error=nope.html s3://camden-wander/
   - Added "Contributing" section stating repository doesn't accept external contributions
   - Noted HLS.js dependency uses Apache License 2.0
 
-**[DESIRED END STATE - DEFERRED]:**
-Metadata extraction from HLS manifest tags for dynamic track display is deferred pending transcoder updates:
-- Goal: Extract track title/metadata from HLS manifest tags (e.g., `#EXTINF` title field, custom `#EXT-X-*` tags) via HLS.js parsed manifest data
-- Responsibility: Ensuring HLS manifests contain accurate metadata is external to this repository and handled in the `batch-ffmpeg-hls-transcoder` project
-- Next step: Once transcoder injects metadata into HLS manifests, implement JavaScript to read parsed manifest data from HLS.js API (e.g., `hls.levels`, `MANIFEST_PARSED` event)
-- Vision: Decouple player/timeline into reusable library where HLS manifests are source of truth for track state
+## 2026-01-15: HLS Manifest Metadata Integration
+
+**[COMPLETED]:**
+Implemented HLS manifest session data as canonical source of truth for track metadata.
+
+**HLS Manifest Session Data Tags:**
+All tracks include custom `#EXT-X-SESSION-DATA` tags with namespace `com.noise2signal-llc.*`:
+- `track-short-name` - Short display name (matches `data-src` folder association guarantee)
+- `title` - Full track title (used in timeline during playback)
+- `artist` - Artist name ("Camden Wander")
+- `date` - Recording/performance date (ISO 8601 format: YYYY-MM-DD)
+- `venue` - Performance venue (empty string for studio recordings/movements)
+- `duration` - Track duration in seconds (decimal)
+- `publisher` - "Noise2Signal LLC"
+- `copyright` - Copyright notice
+
+**JavaScript Implementation:**
+- Timeline uses `data.sessionData['com.noise2signal-llc.title'].VALUE` from `MANIFEST_PARSED` event (site-root/js/camden-wander.js:30-39)
+- Session data accessed via `data.sessionData[DATA-ID].VALUE` structure
+- Timeline displays manifest title during playback instead of HTML `.track-name` text
+- Info panels remain static HTML (mirroring manifest values) for immediate display without HTTP request
+
+**Timeline Geometry Correction:**
+Click handler compensates for slanted polygon styling with geometric offset (site-root/js/camden-wander.js:182-192):
+```javascript
+var dy = rect.height - clickY;
+var offset = dy / Math.tan(75 * Math.PI / 180);
+var adjustedX = clickX + offset;
+```
+Clicks higher on timeline (larger dy) shift right; clicks at bottom (dy=0) have no offset.
+
+**Data Consistency:**
+- HTML info panel values verified against HLS manifest session data
+- Corrected durations to match manifest calculations
+- Fixed folder path: `hls/incidents-of-trauma/` and `data-id="incidents-of-trauma"`
+- Movements manifests updated with date session data matching HTML
+- Script `/workspace/movements-amend-date.sh` provided for adding date metadata to source WAV files via ffmpeg
+
+**Supply Chain Security:**
+- HLS.js pinned to v1.6.15 with SRI hash (sha384) for integrity verification
+- Protects against CDN compromise and MITM attacks

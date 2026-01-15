@@ -27,7 +27,13 @@ function loadTrack(src, trackId, trackTitle) {
   currentTrackData = { id: trackId, title: trackTitle, src: src };
   hls = new Hls();
   hls.attachMedia(audio);
-  hls.on(Hls.Events.MANIFEST_PARSED, function() {
+  hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+    if (data.sessionData) {
+      var titleData = data.sessionData['com.noise2signal-llc.title'];
+      if (titleData && titleData.VALUE) {
+        currentTrackData.title = titleData.VALUE;
+      }
+    }
     playControl.disabled = false;
     audio.play();
   });
@@ -177,7 +183,11 @@ timeline.addEventListener('click', function(e) {
   if (!audio.duration || isNaN(audio.duration)) return;
   var rect = timeline.getBoundingClientRect();
   var clickX = e.clientX - rect.left;
-  var percent = clickX / rect.width;
+  var clickY = e.clientY - rect.top;
+  var dy = rect.height - clickY;
+  var offset =  dy / Math.tan(75 * Math.PI / 180);
+  var adjustedX = clickX + offset;
+  var percent = adjustedX / rect.width;
   audio.currentTime = percent * audio.duration;
 });
 
