@@ -35,7 +35,7 @@ function updateTimelineText() {
   if (!currentTrackData || !player.duration || isNaN(player.duration)) {
     timelinePlayed.style.width = '0%';
     timelinePlayedStatus.textContext = "";
-    timelineQueuedStatus.textContent = "(Select a track to play above)";
+    timelineQueuedStatus.textContent = "------> Select a track to play above";
     return;
   }
 
